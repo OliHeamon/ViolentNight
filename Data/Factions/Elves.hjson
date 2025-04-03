@@ -1,0 +1,7 @@
+﻿Identifier: Elves
+Members: [
+    "ElfArcher"
+]
+Enemies: [
+    "Yule"
+]

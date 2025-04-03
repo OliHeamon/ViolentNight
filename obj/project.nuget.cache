@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "NIrz9b3YrJmKa0qIYw3odkf2iDJZZCQ2Ku9Y0qbFyMHuoJHXNFkXaBjCgxx/ZjUYKDf+X9HuNukcwmvm9FwTrA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\olive\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\ViolentNight\\ViolentNight.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\olive\\.nuget\\packages\\tmodloader.codeassist\\0.1.5\\tmodloader.codeassist.0.1.5.nupkg.sha512"
+  ],
+  "logs": []
+}

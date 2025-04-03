@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Import tModLoader mod properties -->
+	<Import Project="..\tModLoader.targets" />
+
+	<!-- General -->
+	<PropertyGroup>
+		
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="Data\Factions\Elves.hjson" />
+	  <None Remove="Data\Factions\Yule.hjson" />
+	  <None Remove="localization\en-US.hjson" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Assets\Music\" />
+	</ItemGroup>
+
+	<!-- References -->
+
+</Project>
