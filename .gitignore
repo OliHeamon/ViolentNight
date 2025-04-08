@@ -10,6 +10,4 @@ obj/
 
 # User-specific files.
 *.user
-
-# Extraneous mod binaries.
-src/Carbon/lib/
+*.sln
