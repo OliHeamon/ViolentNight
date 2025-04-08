@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Terraria.ModLoader;
 using ViolentNight.Systems.Data;
 using ViolentNight.Systems.Data.DataFileTypes;
@@ -13,12 +14,12 @@ public sealed class NPCFactionSystem : ModSystem
 
     public override void PostSetupContent()
     {
-        FactionData[] definitions = DataManagerSystem.GetAllDataOfType<FactionData>();
+        ReadOnlySpan<FactionData> definitions = DataManagerSystem.GetAllDataOfType<FactionData>();
 
         GenerateEnemyMap(definitions);
     }
 
-    private static void GenerateEnemyMap(FactionData[] definitions)
+    private static void GenerateEnemyMap(ReadOnlySpan<FactionData> definitions)
     {
         Dictionary<string, FactionData> factionsById = [];
 

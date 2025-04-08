@@ -12,7 +12,7 @@ public sealed class DataManagerSystem : ModSystem
 {
     private static readonly List<IDataManager> dataManagers = [];
 
-    private static readonly Dictionary<Type, IDataFile[]> data = [];
+    private static readonly Dictionary<Type, IDataManager> typeToManager = [];
 
     public static void Register(IDataManager manager)
     {
@@ -27,7 +27,7 @@ public sealed class DataManagerSystem : ModSystem
         {
             string[] targets = allDataFiles.Where(f => f.EndsWith(manager.Extension)).ToArray();
 
-            IDataFile[] files = new IDataFile[targets.Length];
+            JObject[] files = new JObject[targets.Length];
 
             for (int i = 0; i < files.Length; i++)
             {
@@ -41,22 +41,24 @@ public sealed class DataManagerSystem : ModSystem
                 string jsonText = HjsonValue.Parse(hjsonText).ToString(Stringify.Plain);
                 JObject json = JObject.Parse(jsonText);
 
-                files[i] = manager.LoadData(json);
+                files[i] = json;
             }
+
+            manager.Populate(files);
 
             Type dataFileType = manager.GetType().BaseType.GetGenericArguments()[0];
 
-            data[dataFileType] = files;
+            typeToManager[dataFileType] = manager;
         }
     }
 
-    public static T[] GetAllDataOfType<T>() where T : IDataFile
+    public static ReadOnlySpan<T> GetAllDataOfType<T>() where T : struct
     {
-        if (!data.TryGetValue(typeof(T), out IDataFile[] files))
+        if (!typeToManager.TryGetValue(typeof(T), out IDataManager manager))
         {
             throw new FileLoadException($"Unsupported data file type: {typeof(T).FullName}");
         }
 
-        return files.Cast<T>().ToArray();
+        return ((DataManager<T>)manager).Data;
     }
 }

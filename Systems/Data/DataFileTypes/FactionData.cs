@@ -9,7 +9,7 @@ namespace ViolentNight.Systems.Data.DataFileTypes;
 /// <param name="identifier">A string identifier for the faction type.</param>
 /// <param name="members">NPC IDs of all members. In the data file, these are encoded as strings - ID name (vanilla) or type name (modded).</param>
 /// <param name="enemies">Faction identifiers of all enemy factions.</param>
-public struct FactionData(string identifier, int[] members, string[] enemies) : IDataFile
+public struct FactionData(string identifier, int[] members, string[] enemies)
 {
     public string Identifier = identifier;
     public int[] Members = members;
@@ -20,7 +20,7 @@ public sealed class FactionDataManager : DataManager<FactionData>
 {
     public override string Extension => ".faction.hjson";
 
-    public override FactionData LoadData(JObject data)
+    protected override FactionData LoadData(JObject data)
     {
         FactionData definition = new();
 
