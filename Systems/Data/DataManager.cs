@@ -77,3 +77,10 @@ public sealed class DataManager : ModSystem
         }
     }
 }
+
+public interface IDataManager<T> where T : struct
+{
+    string Extension { get; }
+
+    void Populate(ReadOnlySpan<JObject> inputs, Span<T> outputs);
+}
