@@ -14,7 +14,7 @@ public sealed class NPCFactionSystem : ModSystem
 
     public override void PostSetupContent()
     {
-        ReadOnlySpan<FactionData> definitions = DataManagerSystem.GetAllDataOfType<FactionData>();
+        ReadOnlySpan<FactionData> definitions = DataManager.GetAllDataOfType<FactionData>();
 
         GenerateEnemyMap(definitions);
     }

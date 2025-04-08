@@ -8,6 +8,6 @@ public class ViolentNight : Mod
 {
     public override void Load()
     {
-        DataManagerSystem.Register(new FactionDataManager());
+        DataManager.Register<FactionDataManager>();
     }
 }
