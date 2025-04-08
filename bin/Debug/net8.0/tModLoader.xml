@@ -10449,7 +10449,7 @@
         <member name="M:Terraria.ModLoader.Core.ModOrganizer.FindMods(System.Boolean)">
             <summary>Mods from any location, using the default internal priority logic</summary>
         </member>
-        <member name="M:Terraria.ModLoader.Core.ModOrganizer.DetectModChangesForInfoMessage">
+        <member name="M:Terraria.ModLoader.Core.ModOrganizer.DetectModChangesForInfoMessage(System.Collections.Generic.IEnumerable{System.String}@)">
             <summary>
             Returns changes based on last time <see cref="M:Terraria.ModLoader.Core.ModOrganizer.SaveLastLaunchedMods"/> was called. Can be null if no changes.
             </summary>

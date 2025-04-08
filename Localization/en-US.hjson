@@ -1,9 +1,7 @@
-Mods.ViolentNight: {
-	StartMessage: The War on Christmas has been declared!
-	Elves: {
-		ElvesFaction: E.L.V.E.S
-	}
-	Yule: {
-		YuleFaction: The Yule
+Mods: {
+	ViolentNight: {
+		StartMessage: The War on Christmas has been declared!
+		Elves.ElvesFaction: E.L.V.E.S
+		Yule.YuleFaction: The Yule
 	}
 }

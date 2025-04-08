@@ -8,8 +8,8 @@
 		
 	</PropertyGroup>
 	<ItemGroup>
-	  <None Remove="Data\Factions\Elves.hjson" />
-	  <None Remove="Data\Factions\Yule.hjson" />
+	  <None Remove="Data\Factions\Elves.faction.hjson" />
+	  <None Remove="Data\Factions\Yule.faction.hjson" />
 	  <None Remove="localization\en-US.hjson" />
 	</ItemGroup>
 	<ItemGroup>

@@ -1,0 +1,8 @@
+﻿Elves: {
+    Members: [
+        ElfArcher
+    ]
+    Enemies: [
+        Yule
+    ]
+}

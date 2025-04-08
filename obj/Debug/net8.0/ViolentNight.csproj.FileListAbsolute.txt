@@ -225,8 +225,9 @@ C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\ob
 C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentNight.AssemblyInfoInputs.cache
 C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentNight.AssemblyInfo.cs
 C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentNight.csproj.CoreCompileInputs.cache
-C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentN.4E544C5E.Up2Date
 C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentNight.dll
 C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\refint\ViolentNight.dll
 C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentNight.pdb
 C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ref\ViolentNight.dll
+C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentNight.sourcelink.json
+C:\Users\olive\Documents\My Games\Terraria\tModLoader\ModSources\ViolentNight\obj\Debug\net8.0\ViolentNight.csproj.CopyComplete
