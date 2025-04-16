@@ -1,0 +1,7 @@
+Elfantryman: {
+	MaxSightRangeTiles: 80
+	PlayerWeight: 3.0
+	PreferredTargetWeights: [
+		["GingerbreadMan", 1.0]
+	]
+}

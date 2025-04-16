@@ -1,6 +1,6 @@
 ﻿Elves: {
     Members: [
-        ElfArcher
+        Elfantryman
     ]
     Enemies: [
         Yule

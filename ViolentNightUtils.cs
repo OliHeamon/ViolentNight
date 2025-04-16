@@ -21,6 +21,6 @@ public static class ViolentNightUtils
             }
         }
 
-        throw new Exception("Invalid NPC ID in data file.");
+        throw new Exception($"Invalid NPC ID in data file: {name}");
     }
 }

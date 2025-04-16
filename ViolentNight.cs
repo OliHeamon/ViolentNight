@@ -9,5 +9,6 @@ public class ViolentNight : Mod
     public override void Load()
     {
         DataManager.Register<FactionDataManager>();
+        DataManager.Register<TargetingDataManager>();
     }
 }

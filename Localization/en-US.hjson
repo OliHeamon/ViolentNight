@@ -3,5 +3,6 @@ Mods: {
 		StartMessage: The War on Christmas has been declared!
 		Elves.ElvesFaction: E.L.V.E.S
 		Yule.YuleFaction: The Yule
+		NPCs.Elfantryman.DisplayName: Elfantryman
 	}
 }

@@ -6,7 +6,7 @@ using ViolentNight.Systems.Data.DataFileTypes;
 
 namespace ViolentNight.Systems;
 
-public sealed class NPCFactionSystem : ModSystem
+public sealed class FactionSystem : ModSystem
 {
     private static readonly Dictionary<int, HashSet<int>> enemiesOf = [];
 
