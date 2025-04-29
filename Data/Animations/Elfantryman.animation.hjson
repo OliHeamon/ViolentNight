@@ -1,0 +1,37 @@
+﻿Elfantryman: {
+  Frames: 10
+  # The overarching state name corresponds to an AI state.
+  Idle: {
+    # In cycle mode, each frame consists of [Delay, Frame Number]. The delay is the amount of ticks to wait before the NEXT frame, and frame number is 0-indexed.
+    Mode: "Cycle"
+    Frames: [
+      [150, 2]
+      [8, 7]
+      [150, 8]
+      [8, 7]
+    ]
+  }
+  Walking: {
+    Mode: "Cycle"
+    Frames: [
+      [10, 6]
+      [10, 7]
+      [10, 8]
+      [10, 9]
+    ]
+  }
+  Running: {
+    Mode: "Cycle"
+    Frames: [
+      [5, 6]
+      [5, 7]
+      [5, 8]
+      [5, 9]
+    ]
+  }
+  Attack: {
+    Mode: "Variant"
+    # In variant mode, each frame consists of [Frame Number]. States can be indexed by NPC AI.
+    Frames: [0, 1, 2, 3, 4]
+  }
+}

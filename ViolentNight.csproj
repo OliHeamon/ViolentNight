@@ -8,6 +8,7 @@
 		
 	</PropertyGroup>
 	<ItemGroup>
+	  <None Remove="Data\Animations\Elfantryman.animation.hjson" />
 	  <None Remove="Data\Factions\Elves.faction.hjson" />
 	  <None Remove="Data\Factions\Yule.faction.hjson" />
 	  <None Remove="data\targeting\Elfantryman.targeting.hjson" />

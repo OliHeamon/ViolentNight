@@ -4,16 +4,12 @@ using Terraria;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
 using Terraria.ModLoader;
+using ViolentNight.Systems.AI;
 
 namespace ViolentNight.Content.NPCs.Elves;
 
-public sealed class Elfantryman : ModNPC
+public sealed class Elfantryman : ViolentNightNPC
 {
-    public override void SetStaticDefaults()
-    {
-        Main.npcFrameCount[Type] = 10;
-    }
-
     public override void SetDefaults()
     {
         NPC.width = 20;
@@ -38,16 +34,6 @@ public sealed class Elfantryman : ModNPC
         ]);
     }
 
-    public override void FindFrame(int frameHeight)
-    {
-        NPC.frameCounter++;
-        NPC.frameCounter %= 10 * 4;
-
-        Rectangle frame = new(0, (int)((NPC.frameCounter / 10) + 6) * 54, 48, 54);
-
-        NPC.frame = frame;
-    }
-
     public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
     {
         Texture2D texture = ModContent.Request<Texture2D>(Texture).Value;
@@ -55,5 +41,22 @@ public sealed class Elfantryman : ModNPC
         spriteBatch.Draw(texture, NPC.position - screenPos + new Vector2(-4, 6), NPC.frame, drawColor, NPC.rotation, NPC.Size / 2, NPC.scale, NPC.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0);
 
         return false;
+    }
+
+    public override AIContainer InitialiseAI()
+    {
+        return new AIContainer("Idle")
+            .AddState(new("Idle", IdleAI));
+    }
+
+    private void IdleAI()
+    {
+        NPC.ai[0]++;
+
+        if (NPC.ai[0] >= 60)
+        {
+            NPC.ai[0] = 0;
+            NPC.direction *= -1;
+        }
     }
 }

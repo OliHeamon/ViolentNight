@@ -12,7 +12,7 @@ public sealed class FactionSystem : ModSystem
 
     private static readonly Dictionary<int, string> factionName = [];
 
-    public override void PostSetupContent()
+    public override void OnModLoad()
     {
         ReadOnlySpan<FactionData> definitions = DataManager.GetAllDataOfType<FactionData>();
 
@@ -54,5 +54,5 @@ public sealed class FactionSystem : ModSystem
 
     public static bool IsEnemyOf(int npc, int potentialEnemy) => enemiesOf[npc].Contains(potentialEnemy);
 
-    public static string GetFactionIdentifier(int npc) => factionName.TryGetValue(npc, out string identifier) ? identifier : null;
+    public static string GetFactionIdentifier(int npc) => factionName[npc];
 }

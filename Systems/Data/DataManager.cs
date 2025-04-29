@@ -15,20 +15,20 @@ public sealed class DataManager : ModSystem
 
     private static readonly Dictionary<Type, Type> dataFileTypeToManagerType = [];
 
-    public static void Register<T>()
-    {
-        Type dataFileType = typeof(T).GetInterfaces()[0].GetGenericArguments()[0];
-
-        dataFileTypeToManagerType[dataFileType] = typeof(T);
-    }
-
-    public override void OnModLoad()
+    public override void Load()
     {
         dataFiles = Mod.GetFileNames().Where(f => f.StartsWith("Data")).ToArray();
 
-        foreach (Type type in dataFileTypeToManagerType.Keys)
+        IEnumerable<Type> dataManagers = Mod.Code.GetTypes()
+            .Where(t => t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDataManager<>)));
+
+        foreach (Type type in dataManagers)
         {
-            RegisterDataType(type);
+            Type dataType = type.GetInterfaces()[0].GetGenericArguments()[0];
+
+            dataFileTypeToManagerType[dataType] = type;
+
+            RegisterDataType(dataType);
         }
     }
 

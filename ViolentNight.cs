@@ -1,14 +1,17 @@
+using ReLogic.Content.Sources;
 using Terraria.ModLoader;
-using ViolentNight.Systems.Data;
-using ViolentNight.Systems.Data.DataFileTypes;
 
 namespace ViolentNight;
 
-public class ViolentNight : Mod
+public sealed class ViolentNight : Mod
 {
-    public override void Load()
+    public override IContentSource CreateDefaultContentSource()
     {
-        DataManager.Register<FactionDataManager>();
-        DataManager.Register<TargetingDataManager>();
+        SmartContentSource source = new(base.CreateDefaultContentSource());
+
+        // Redirects requests for ModName/Content/... to ModName/Assets/...
+        source.AddDirectoryRedirect("Content", "Assets");
+
+        return source;
     }
 }
