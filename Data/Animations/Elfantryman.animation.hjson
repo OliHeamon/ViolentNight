@@ -11,7 +11,7 @@
       [8, 7]
     ]
   }
-  Walking: {
+  Navigating: {
     Mode: "Cycle"
     Frames: [
       [10, 6]
@@ -20,18 +20,13 @@
       [10, 9]
     ]
   }
-  Running: {
-    Mode: "Cycle"
-    Frames: [
-      [5, 6]
-      [5, 7]
-      [5, 8]
-      [5, 9]
-    ]
-  }
   Attack: {
     Mode: "Variant"
     # In variant mode, each frame consists of [Frame Number]. States can be indexed by NPC AI.
     Frames: [0, 1, 2, 3, 4]
+  }
+  Jumping: {
+    Mode: "Variant"
+    Frames: [5]
   }
 }

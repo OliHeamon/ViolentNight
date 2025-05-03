@@ -179,8 +179,6 @@ public abstract class ViolentNightNPC : ModNPC
         {
             cycleFrameIndex = 0;
         }
-
-        AnimationVariant = 3;
     }
 
     private void RunAnimationCycle(AnimationStateInfo currentState)
@@ -206,9 +204,13 @@ public abstract class ViolentNightNPC : ModNPC
 
     private void RunAnimationVariant(AnimationStateInfo currentState)
     {
-        if (AnimationVariant < 0 || AnimationVariant > currentState.Frames.Length)
+        if (AnimationVariant < 0)
         {
-            throw new ArgumentOutOfRangeException($"Specified animation variant {AnimationVariant} is outside range of possible values (max: {currentState.Frames.Length}.");
+            AnimationVariant = currentState.Frames.Length - 1;
+        }
+        if (AnimationVariant > currentState.Frames.Length - 1)
+        {
+            AnimationVariant = 0;
         }
 
         int frameId = currentState.Frames[AnimationVariant].Frame;

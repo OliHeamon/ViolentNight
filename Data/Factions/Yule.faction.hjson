@@ -1,6 +1,7 @@
 ﻿Yule: {
     Members: [
         GingerbreadMan
+        BoundGoblin
     ]
     Enemies: [
         Elves

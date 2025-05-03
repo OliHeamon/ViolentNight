@@ -7,6 +7,8 @@ public sealed class AIContainer(string initialState)
 {
     public AIState CurrentState => aiStatesById[currentState];
 
+    public event Action OnStateChanged;
+
     private string currentState = initialState;
 
     private readonly Dictionary<string, AIState> aiStatesById = [];
@@ -38,6 +40,8 @@ public sealed class AIContainer(string initialState)
         CurrentState?.OnDeactivated?.Invoke();
 
         currentState = identifier;
+
+        OnStateChanged?.Invoke();
 
         CurrentState?.OnActivated?.Invoke();
     }
