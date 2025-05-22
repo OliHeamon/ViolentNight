@@ -2,17 +2,32 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
 using Terraria.ModLoader;
 using ViolentNight.Systems.AI;
-using ViolentNight.Systems.Pathfinding;
+using Wayfarer.API;
+using Wayfarer.Data;
+using Wayfarer.Edges;
+using Wayfarer.Pathfinding;
 
 namespace ViolentNight.Content.NPCs.Elves;
 
 public sealed class Elfantryman : ViolentNightNPC
 {
+    private WayfarerHandle handle;
+    private PathResult path;
+
+    private bool jumped;
+    private int jumpDirection;
+
+    private int stuckDuration;
+
+    private const float maxXVelocity = 3;
+
     public int Timer
     {
         get => (int)NPC.ai[0];
@@ -30,7 +45,7 @@ public sealed class Elfantryman : ViolentNightNPC
         NPC.HitSound = SoundID.NPCHit1;
         NPC.DeathSound = SoundID.NPCDeath2;
 
-        NPC.value = 60f;
+        NPC.value = 0;
 
         NPC.knockBackResist = 0.5f;
     }
@@ -49,12 +64,10 @@ public sealed class Elfantryman : ViolentNightNPC
 
         spriteBatch.Draw(texture, NPC.position - screenPos + new Vector2(-8, 6), NPC.frame, drawColor, NPC.rotation, NPC.Size / 2, NPC.scale, NPC.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0);
 
-        if (path != null)
+        if (handle.Initialized && path is not null)
         {
-            foreach (Edge edge in path.edgesToTraverse)
-            {
-                region?.DrawEdge(edge);
-            }
+            //WayfarerAPI.DebugRenderNavMesh(handle, Main.spriteBatch);
+            WayfarerAPI.DebugRenderPath(handle, Main.spriteBatch, path);
         }
 
         return false;
@@ -66,15 +79,43 @@ public sealed class Elfantryman : ViolentNightNPC
             .AddState(new("Idle", IdleAI))
             .AddState(new("Navigating", NavigatingAI))
             .AddState(new("Attack", AttackAI))
-            .AddState(new("Jumping", JumpingAI));
+            .AddState(new("Jumping", JumpingAI))
+            .AddState(new("WaitingForPath", WaitingAI));
 
         container.OnStateChanged += () =>
         {
             AnimationVariant = 0;
             Timer = 0;
+
+            if (container.CurrentState.Identifier == "WaitingForPath")
+            {
+                StartPathing();
+            }
         };
 
         return container;
+    }
+
+    public override void OnSpawn(IEntitySource source)
+    {
+        base.OnSpawn(source);
+
+        Timer = 320;
+
+        NavMeshParameters navMeshParameters = new(
+            NPC.Center.ToTileCoordinates(),
+            100,
+            WayfarerPresets.DefaultIsTileValid
+        );
+        NavigatorParameters navigatorParameters = new(
+            NPC.Hitbox,
+            WayfarerPresets.DefaultJumpFunction,
+            new(8, 10),
+            () => NPC.gravity,
+            SelectDestination
+        );
+
+        WayfarerAPI.TryCreatePathfindingInstance(navMeshParameters, navigatorParameters, out handle);
     }
 
     private void IdleAI()
@@ -83,170 +124,174 @@ public sealed class Elfantryman : ViolentNightNPC
 
         Timer++;
 
-        if (Timer >= 150)
+        if (Timer % 300 == 0)
         {
-            Timer = 0;
-            NPC.direction *= -1;
+            NPC.spriteDirection = Main.rand.Next([-1, 1]);
         }
 
-        NPC.spriteDirection = -NPC.direction;
-
-        if (Target != null)
+        if (Target != null && Timer >= 360)
         {
-            AIState.TransitionTo("Navigating");
+            Timer = 0;
+
+            AIState.TransitionTo("WaitingForPath");
         }
     }
 
-    private MappedRegion region;
-    private Pathfinder path;
+    private void WaitingAI()
+    {
+        NPC.velocity.X = 0;
+    }
 
-    private bool hasPath;
+    private void StartPathing()
+    {
+        bool tilesBelow = ViolentNightUtils.GetTilesBelow(NPC.Hitbox, out Point[] tiles);
 
-    private Point targetPoint;
-    private EdgeType navigatingEdgeType;
+        if (!tilesBelow)
+            return;
 
-    private const float maxXVelocity = 3;
+        WayfarerAPI.RecalculateNavMesh(handle, NPC.Center.ToTileCoordinates());
+        WayfarerAPI.RecalculatePath(handle, tiles, NewPathFound);
+    }
+
+    private void NewPathFound(PathResult result)
+    {
+        if (AIState.CurrentState.Identifier != "WaitingForPath")
+            return;
+
+        path = result;
+        AIState.TransitionTo("Navigating");
+    }
+
+    private void PathLost()
+    {
+        NPC.velocity.X = 0;
+
+        path = null;
+        AIState.TransitionTo("WaitingForPath");
+    }
 
     private void NavigatingAI()
     {
-        if (region == null)
+        if (NPC.position == NPC.oldPosition && path != null && path.HasPath)
         {
-            region = new(40, NPC.Hitbox, 8, 10);
-            path = new Pathfinder(region, SelectDestination);
-            region.Remap(NPC.Center);
-        }
+            stuckDuration++;
 
-        if (!hasPath) 
-        {
-            bool tilesBelow = ViolentNightUtils.GetTilesBelow(NPC.Hitbox, out List<Point> tiles);
-
-            if (!tilesBelow)
-                return;
-
-            foreach (Point node in tiles)
+            if (stuckDuration > 60 * 5)
             {
-                bool started = path.StartPath(node, out bool alreadyAtGoal);
+                PathLost();
 
-                if (alreadyAtGoal)
-                {
-                    AIState.TransitionTo("Attack");
-                    return;
-                }
-
-                if (started)
-                {
-                    hasPath = true;
-
-                    path.TryGetNextNavPoint(out targetPoint, out navigatingEdgeType);
-
-                    break;
-                }
+                stuckDuration = 0;
             }
         }
         else
         {
-            switch (navigatingEdgeType)
+            stuckDuration = 0;
+        }
+
+        if (path is not null && path.IsAlreadyAtGoal)
+        {
+            AIState.TransitionTo("Attack");
+            return;
+        }
+
+        if (path is null || !path.HasPath)
+        {
+            PathLost();
+            return;
+        }
+
+        PathEdge edge = path.Current;
+
+        if (edge.Is<Fall>() || edge.Is<Walk>())
+        {
+            Vector2 targetTileLocation = new Vector2(edge.To.X * 16, edge.To.Y * 16) + new Vector2(8, 8);
+
+            int walkDirection = Math.Sign(targetTileLocation.X - NPC.Center.X);
+
+            NPC.velocity.X += 0.2f * walkDirection;
+
+            if (Math.Abs(NPC.velocity.X) > maxXVelocity)
             {
-                case EdgeType.Fall:
-                case EdgeType.Walk:
-                    Vector2 targetTileLocation = new Vector2(targetPoint.X * 16, targetPoint.Y * 16) + new
-                         Vector2(8, 8);
-
-                    int walkDirection = Math.Sign(targetTileLocation.X - NPC.Center.X);
-
-                    NPC.velocity.X += 0.2f * walkDirection;
-
-                    if (Math.Abs(NPC.velocity.X) > maxXVelocity)
-                    {
-                        NPC.velocity.X = maxXVelocity * walkDirection;
-                    }
-
-                    if (navigatingEdgeType == EdgeType.Fall && NPC.velocity.Y != 0)
-                    {
-                        NPC.velocity.X *= 0.5f;
-                    } 
-
-                    bool xClose = Math.Abs(targetTileLocation.X - NPC.Hitbox.Bottom().X) < 2;
-                    bool goalReachedCondition = navigatingEdgeType == EdgeType.Walk ?
-                        xClose :
-                        xClose && Math.Abs(targetTileLocation.Y - NPC.Hitbox.Bottom().Y) < 16;
-
-
-                    if (goalReachedCondition)
-                    {
-                        // Reached the end of the path.
-                        if (!path.TryGetNextNavPoint(out targetPoint, out navigatingEdgeType))
-                        {
-                            PathLost();
-
-                            AIState.TransitionTo("Attack");
-
-                            return;
-                        }
-                    }
-
-                    bool tilesBelow = ViolentNightUtils.GetTilesBelow(NPC.Hitbox, out List<Point> tiles);
-
-                    if (!tilesBelow)
-                    {
-                        PathLost();
-                        return;
-                    }
-                    else
-                    {
-                        bool contains = false;
-
-                        foreach (Point node in tiles)
-                        {
-                            if (region.PointToNodeId.ContainsKey(node))
-                            {
-                                contains = true;
-                            }
-                        }
-
-                        if (!contains)
-                        {
-                            PathLost();
-                            return;
-                        }
-                    }
-
-                    NPC.spriteDirection = Math.Sign(NPC.velocity.X);
-
-                    break;
-                case EdgeType.Jump:
-                    AIState.TransitionTo("Jumping");
-                    break;
+                NPC.velocity.X = maxXVelocity * walkDirection;
             }
+
+            if (Math.Abs(NPC.velocity.X) < 0.02f)
+            {
+                NPC.velocity.X = 0;
+            }
+
+            if (edge.Is<Fall>() && NPC.velocity.Y != 0)
+            {
+                NPC.velocity.X *= 0.75f;
+            }
+
+            bool xClose = Math.Abs(targetTileLocation.X - NPC.Hitbox.Bottom().X) < 2;
+
+            bool goalReachedCondition = edge.Is<Walk>() ?
+                xClose :
+                xClose && Math.Abs(targetTileLocation.Y - NPC.Hitbox.Bottom().Y) < 16;
+
+            if (goalReachedCondition)
+            {
+                path.Advance(out bool atGoal);
+
+                // Reached the end of the path.
+                if (atGoal)
+                {
+                    AIState.TransitionTo("Attack");
+                    return;
+                }
+            }
+
+            bool tilesBelow = ViolentNightUtils.GetTilesBelow(NPC.Hitbox, out Point[] tiles);
+
+            if (tilesBelow)
+            {
+                bool contains = false;
+
+                foreach (Point node in tiles)
+                {
+                    if (WayfarerAPI.PointIsInNavMesh(handle, node))
+                    {
+                        contains = true;
+                    }
+                }
+
+                if (!contains)
+                {
+                    PathLost();
+                    return;
+                }
+            }
+
+            NPC.spriteDirection = Math.Sign(NPC.velocity.X);
+        }
+        else if (edge.Is<Jump>())
+        {
+            AIState.TransitionTo("Jumping");
         }
     }
 
-    private bool jumped;
-    private int jumpDirection;
-
     private void JumpingAI()
     {
+        if (path is null || !path.HasPath)
+        {
+            PathLost();
+            return;
+        }
+
+        PathEdge edge = path.Current;
+
         if (!jumped)
         {
             Vector2 start = NPC.Hitbox.Bottom();
 
             // Top-middle of target tile.
-            Vector2 end = new Vector2(targetPoint.X * 16, targetPoint.Y * 16) + new Vector2(8, 0);
+            Vector2 end = new Vector2(edge.To.X * 16, edge.To.Y * 16) + new Vector2(8, 0);
 
-            Vector2 velocity = DyBasedSpeed(start, end, out bool valid);
-
-            // If a jump is less than 3 tiles horizontally, use the Y-based method instead.
-            if (end.X - start.X < 16 * 3 && valid)
-            {
-                NPC.velocity = velocity;
-            }
-            else
-            {
-                NPC.velocity = DxBasedSpeed(start, end);
-            }
+            NPC.velocity = WayfarerPresets.DefaultJumpFunction(start, end, () => NPC.gravity);
 
             jumped = true;
-
             jumpDirection = Math.Sign(end.X - start.X);
         }
         else
@@ -258,7 +303,7 @@ public sealed class Elfantryman : ViolentNightNPC
 
             NPC.spriteDirection = jumpDirection;
 
-            bool tilesBelow = ViolentNightUtils.GetTilesBelow(NPC.Hitbox, out List<Point> tiles);
+            bool tilesBelow = ViolentNightUtils.GetTilesBelow(NPC.Hitbox, out Point[] tiles);
 
             // There are tiles that the NPC can stand on.
             if (tilesBelow)
@@ -270,7 +315,7 @@ public sealed class Elfantryman : ViolentNightNPC
 
                 foreach (Point node in tiles)
                 {
-                    if (region.PointToNodeId.ContainsKey(node))
+                    if (WayfarerAPI.PointIsInNavMesh(handle, node))
                     {
                         contains = true;
                     }
@@ -279,29 +324,26 @@ public sealed class Elfantryman : ViolentNightNPC
                 // If the tiles stood on are not in the navigation map, calculate a new path.
                 if (!contains)
                 {
-                    AIState.TransitionTo("Navigating");
-
                     PathLost();
-
                     return;
                 }
 
                 // If the tiles below the NPC contain the target point, then we successfully reached the jump node.
-                if (tiles.Contains(targetPoint))
+                if (tiles.Contains(edge.To))
                 {
+                    path.Advance(out bool atGoal);
+
                     // Reached the end of the path.
-                    if (!path.TryGetNextNavPoint(out targetPoint, out navigatingEdgeType))
+                    if (atGoal)
                     {
-                        PathLost();
-
                         AIState.TransitionTo("Attack");
-
                         return;
                     }
                 }
                 else
                 {
                     PathLost();
+                    return;
                 }
 
                 AIState.TransitionTo("Navigating");
@@ -311,125 +353,21 @@ public sealed class Elfantryman : ViolentNightNPC
         }
     }
 
-    public override bool PreAI()
+    public override void PostAI()
     {
-        Collision.StepUp(ref NPC.position, ref NPC.velocity, NPC.width, NPC.height, ref NPC.stepSpeed, ref NPC.gfxOffY);
-
-        return true;
-    }
-
-    private Vector2 DxBasedSpeed(Vector2 start, Vector2 end)
-    {
-        float dx = end.X - start.X;
-        float dy = end.Y - start.Y;
-
-        // Jump at max X speed.
-        float uX = maxXVelocity * Math.Sign(dx);
-
-        // Time of flight in ticks.
-        int t = (int)(dx / uX);
-
-        float g = NPC.gravity;
-
-        float uY = (dy - (0.5f * g * t * t)) / t;
-        uY -= 0.1f;
-
-        return new Vector2(uX, uY);
-    }
-
-    private Vector2 DyBasedSpeed(Vector2 start, Vector2 end, out bool valid)
-    {
-        valid = true;
-
-        float dx = end.X - start.X;
-        float dy = end.Y - start.Y;
-
-        // Initial Y velocity.
-        float uY = -(float)Math.Sqrt(2 * NPC.gravity * -dy) - NPC.gravity;
-
-        float t = PositiveQuadraticRoot(0.5f * NPC.gravity, -uY, dy);
-
-        if (float.IsNaN(t) || t < 0)
+        if (AIState?.CurrentState?.Identifier != "Jumping")
         {
-            valid = false;
-            return Vector2.Zero;
+            Collision.StepUp(ref NPC.position, ref NPC.velocity, NPC.width, NPC.height, ref NPC.stepSpeed, ref NPC.gfxOffY);
         }
 
-        float uX = Math.Min(dx / t, maxXVelocity);
-
-        return new Vector2(uX, uY);
-    }
-
-    private float PositiveQuadraticRoot(float a, float b, float c)
-    {
-        float discriminant = (b * b) - (4 * a * c);
-
-        if (discriminant < 0)
-        {
-            return float.NaN;
-        }
-
-        float x1 = (-b + (float)Math.Sqrt(discriminant)) / (2 * a);
-        float x2 = (-b - (float)Math.Sqrt(discriminant)) / (2 * a);
-
-        return Math.Max(x1, x2);
-    }
-
-    private void PathLost()
-    {
-        NPC.velocity.X *= 0.75f;
-        hasPath = false;
-        region.Remap(NPC.Center);
-    }
-
-    private Point SelectDestination(List<Point> allNodes)
-    {
-        Point fallback = allNodes[0];
-
-        Point closest = fallback;
-        float closestToPlayer = float.PositiveInfinity;
-
-        Point closestColliding = fallback;
-        float distanceColliding = float.PositiveInfinity;
-
-        // Pick a random node if there's no target.
-        if (Target == null)
-        {
-            return Main.rand.Next(allNodes);
-        }
-
-        foreach (Point node in allNodes)
-        {
-            Vector2 world = new Vector2(node.X * 16, node.Y * 16) + new Vector2(8);
-
-            Vector2 targetCenter = Target.Value.Hitbox.Center();
-
-            float distance = Vector2.Distance(world, targetCenter);
-            float distanceToMe = Vector2.Distance(world, NPC.Center);
-
-            if (distance < closestToPlayer)
-            {
-                closest = node;
-                closestToPlayer = distance;
-            }
-
-            // If a line of sight point is found, prioritise that one, otherwise return the node closest to the player.
-            // LOS points can't be navigated to if an NPC is already nearby, so as to help them spread out a bit.
-            if (distanceToMe < distanceColliding && Collision.CanHitLine(targetCenter, 0, 0, world - new Vector2(0, NPC.Hitbox.Height / 2), 0, 0))
-            {
-                closestColliding = node;
-                distanceColliding = distanceToMe;
-            }
-        }
-
-        return closestColliding == fallback ? closest : closestColliding;
+        //Main.NewText(AIState?.CurrentState?.Identifier ?? "None");
     }
 
     private void AttackAI()
     {
         NPC.velocity.X *= 0.8f;
 
-        if (Target == null)
+        if (Target is null)
         {
             AIState.TransitionTo("Idle");
             return;
@@ -437,11 +375,12 @@ public sealed class Elfantryman : ViolentNightNPC
 
         Target target = Target.Value;
 
-        if (Timer++ > 60)
+        if (Timer++ > 120)
         {
-            if (!Collision.CanHitLine(target.Hitbox.Center(), 0, 0, NPC.Bottom - new Vector2(0, NPC.Hitbox.Height / 2), 0, 0))
+            if (!ViolentNightUtils.HasLineOfSight(target.Hitbox.Center(), NPC.Bottom - new Vector2(0, NPC.Hitbox.Height / 2)))
             {
                 AIState.TransitionTo("Idle");
+                PathLost();
                 return;
             }
 
@@ -462,12 +401,64 @@ public sealed class Elfantryman : ViolentNightNPC
         float a = MathHelper.PiOver2;
         float b = -MathHelper.PiOver2;
 
-        // Inverse lerp: 0 is full down, 1 is full up.
-        float t = (angle - a) / (b - a);
+        // 0 is full down, 1 is full up.
+        float t = ViolentNightUtils.InverseLerp(angle, a, b);
 
         AnimationVariant = (int)(t * 5);
 
         return;
+    }
 
+    private Point SelectDestination(IReadOnlySet<Point> allNodes)
+    {
+        Point fallback = Point.Zero;
+
+        Point closestColliding = fallback;
+        float distanceColliding = float.PositiveInfinity;
+
+        Point closest = fallback;
+        float closestToTarget = float.PositiveInfinity;
+
+        int index = Main.rand.Next(allNodes.Count);
+
+        // Pick a random node if there's no target.
+        if (Target is null)
+            return allNodes.ElementAt(index);
+
+        foreach (Point node in allNodes)
+        {
+            Vector2 world = new Vector2(node.X * 16, node.Y * 16) + new Vector2(8, 0);
+
+            Vector2 targetCenter = Target.Value.Hitbox.Center();
+
+            float distanceToTarget = Vector2.Distance(world, Target.Value.Hitbox.Center());
+            float distanceToMe = Vector2.Distance(world, NPC.Center);
+
+            if (distanceToTarget < closestToTarget)
+            {
+                closest = node;
+                closestToTarget = distanceToTarget;
+            }
+
+            // If a line of sight point is found, prioritise that one, otherwise return the node closest to the player.
+            // TODO: LOS points should be unable to be navigated to if an NPC is already there, so as to help them spread out a bit.
+            if (distanceToMe < distanceColliding && ViolentNightUtils.HasLineOfSight(targetCenter, world - new Vector2(0, NPC.Hitbox.Height / 2)))
+            {
+                closestColliding = node;
+                distanceColliding = distanceToMe;
+            }
+        }
+
+        if (closestColliding != fallback)
+            return closestColliding;
+        else if (closest != fallback)
+            return closest;
+        else
+            return allNodes.ElementAt(index);
+    }
+
+    public override void OnKill()
+    {
+        handle.Dispose();
     }
 }

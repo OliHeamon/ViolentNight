@@ -4,5 +4,14 @@ Mods: {
 		Elves.ElvesFaction: E.L.V.E.S
 		Yule.YuleFaction: The Yule
 		NPCs.Elfantryman.DisplayName: Elfantryman
+
+		Items: {
+			PathTestItem: {
+				DisplayName: Path Test Item
+				Tooltip: ""
+			}
+		}
+
+		Projectiles.PathTestProj.DisplayName: Path Test Proj
 	}
 }

@@ -27,7 +27,7 @@ public sealed class AIContainer(string initialState)
             return;
         }
 
-        if (currentState == null)
+        if (currentState is null)
         {
             throw new NullReferenceException("AI Container did not have a default state specified!");
         }

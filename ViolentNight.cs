@@ -1,5 +1,6 @@
 using ReLogic.Content.Sources;
 using Terraria.ModLoader;
+using Wayfarer.API;
 
 namespace ViolentNight;
 
@@ -13,5 +14,10 @@ public sealed class ViolentNight : Mod
         source.AddDirectoryRedirect("Content", "Assets");
 
         return source;
+    }
+
+    public override void Unload()
+    {
+        WayfarerAPI.Shutdown();
     }
 }

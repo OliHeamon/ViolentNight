@@ -43,7 +43,7 @@ public sealed class DataManager : ModSystem
 
         static DataStorage()
         {
-            if (dataFiles == null)
+            if (dataFiles is null)
             {
                 return;
             }

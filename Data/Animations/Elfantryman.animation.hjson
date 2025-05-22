@@ -29,4 +29,13 @@
     Mode: "Variant"
     Frames: [5]
   }
+  WaitingForPath: {
+    Mode: "Cycle"
+    Frames: [
+      [150, 2]
+      [8, 7]
+      [150, 8]
+      [8, 7]
+    ]
+  }
 }

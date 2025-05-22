@@ -1,11 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-	<!-- Import tModLoader mod properties -->
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="..\tModLoader.targets" />
-
-	<!-- General -->
 	<PropertyGroup>
-		
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Remove="Data\Animations\Elfantryman.animation.hjson" />
@@ -17,8 +13,14 @@
 	<ItemGroup>
 	  <Folder Include="Assets\Music\" />
 	  <Folder Include="Data\Targeting\" />
+	  <Folder Include="lib\" />
 	</ItemGroup>
-
-	<!-- References -->
-
+	<ItemGroup>
+	  <Reference Include="Wayfarer">
+	    <HintPath>lib\Wayfarer.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+	  <Exec Command="xcopy /fdy &quot;..\Wayfarer\bin\Debug\net8.0\Wayfarer.dll&quot; lib" />
+	</Target>
 </Project>

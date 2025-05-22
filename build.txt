@@ -1,3 +1,4 @@
 displayName = Violent Night
 author = Oli
 version = 1.0
+dllReferences = Wayfarer
